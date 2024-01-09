@@ -1,0 +1,34 @@
+version: "3.9"
+services:
+  # telegram_bot_app:
+  #   container_name: telegram_bot_app
+  #   # restart: always
+  #   build: .
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: 20m
+  #   depends_on:
+  #     - redis_polling
+  #   networks:
+  #     - bot_network
+  
+  birthday_redis:
+    container_name: birthday_redis
+    image: redis
+    restart: always
+    # Persistent storage
+    volumes:
+      - ./redis_data:/data
+      - ./redis_config/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf --save 60 1 --loglevel warning
+    ports:
+      - "16380:6379"
+    environment:
+    - REDIS_MAXMEMORY=1024mb # Limit Redis memory usage to 1024mb
+    networks:
+      - bot_network
+
+networks:
+  bot_network:
+    driver: bridge
