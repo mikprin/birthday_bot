@@ -27,7 +27,10 @@ def get_rules():
 def get_greeting_message():
     '''Read greeting message from resources/greeting_message.txt'''
     greeting_message = read_file('greeting_message.txt')
-    greeting_message = f"{greeting_message}\n\n{get_rules()}\n{get_present_message()}"
+    greeting_message = f"""{greeting_message}\n
+    {get_rules()}
+    {read_file('activity.txt')}
+    {get_present_message()}"""
     return greeting_message
 
 def get_address_msg():

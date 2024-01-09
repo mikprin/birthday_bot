@@ -1,17 +1,20 @@
 version: "3.9"
 services:
-  # telegram_bot_app:
-  #   container_name: telegram_bot_app
-  #   # restart: always
-  #   build: .
-  #   logging:
-  #     driver: json-file
-  #     options:
-  #       max-size: 20m
-  #   depends_on:
-  #     - redis_polling
-  #   networks:
-  #     - bot_network
+  birthday_bot_app:
+    container_name: birthday_bot_app
+    # restart: always
+    build: .
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+    depends_on:
+      - birthday_redis
+    networks:
+      - bot_network
+    # .env file
+    env_file:
+      - .env
   
   birthday_redis:
     container_name: birthday_redis

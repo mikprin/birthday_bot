@@ -18,8 +18,17 @@ sys.path.append(os.path.join(dir_path, '..'))
 from birthday_bot.messages import get_rules, get_greeting_message, get_address_msg
 from birthday_bot import resources
 
+# If ENV is not set, use dotenv
+if not os.environ.get('ENV'):
+    from dotenv import load_dotenv
+    load_dotenv()
+
 # Initialize bot with token from BotFather
-bot_token = '6603926296:AAHVE0WrxAqaBGGNvRxun6YgGmotVOkSLeE'
+assert os.environ['ENV'] == 'prod', 'ENV is not set'
+bot_token = os.environ['BOT_TOKEN']
+redis_host = os.environ['REDIS_HOST']
+redis_port = os.environ['REDIS_PORT']
+
 bot = Bot(token=bot_token)
 dp = Dispatcher(bot)
 
