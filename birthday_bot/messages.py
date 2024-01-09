@@ -18,7 +18,7 @@ def get_rules():
     '''Read rules from resources/rules.txt
     use new line as separator'''
     rules = read_file('rules.txt').split('\n')
-    rules_str = '**ПРАВИЛА:**\n'
+    rules_str = '\n**\t\t\t\t\tПравила вечиринки** \n\n'
     for rule in rules:
         rules_str = f"{rules_str}- {rule.strip()}\n"
     return rules_str
@@ -28,8 +28,9 @@ def get_greeting_message():
     '''Read greeting message from resources/greeting_message.txt'''
     greeting_message = read_file('greeting_message.txt')
     greeting_message = f"""{greeting_message}\n
-    {get_rules()}
+    {get_address_msg()}
     {read_file('activity.txt')}
+    {get_rules()}
     {get_present_message()}"""
     return greeting_message
 

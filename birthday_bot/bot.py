@@ -73,7 +73,7 @@ def get_keyboard(user_id):
         InlineKeyboardButton(attend_button_text, callback_data='toggle_attend'),
         InlineKeyboardButton('Где и когда!?', callback_data='get_address'),
         InlineKeyboardButton('Кто придет?', callback_data='get_guests'),
-        InlineKeyboardButton('ПРАВИЛА!', callback_data='rules'),
+        InlineKeyboardButton('Правила', callback_data='rules'),
     )
     return keyboard
 
@@ -103,21 +103,27 @@ async def process_callback(callback_query: types.CallbackQuery):
             redis_client.srem(SAVED_IDS, user_id)
             remove_attendee(user_id, redis_client)
             await bot.answer_callback_query(callback_query.id, "You've been removed from the guest list.")
+            # Send message additionally
+            await bot.send_message(callback_query.from_user.id, "Вы внесены в список отказавшихся! Но пока карандашом.\nЭто будет иметь последствия!")
         else:
             redis_client.sadd(SAVED_IDS, user_id)
             save_attendee(user_id, username, redis_client)
             await bot.answer_callback_query(callback_query.id, "You've been added to the guest list.")
+            await bot.send_message(callback_query.from_user.id, "Вы внесены в список гостей!")
     elif callback_query.data == 'get_address':
         address = get_address_msg()  # Replace with your actual address
         await bot.answer_callback_query(callback_query.id)
-        await bot.send_message(callback_query.from_user.id, address, parse_mode='Markdown')
+        await bot.send_message(callback_query.from_user.id,
+                               address,
+                               parse_mode='Markdown',
+                               reply_markup=get_keyboard(callback_query.from_user.id),)
         # Send video "resources/home.mp4" additionally
         with impresources.path(resources, 'home.mp4') as path:
             with open(path, 'rb') as video_file:
                 await bot.send_video(callback_query.from_user.id,
                                      video=InputFile(video_file),
                                      caption='Видео как добраться!')
-        
+        await bot.answer_callback_query(callback_query.id)
         
     elif callback_query.data == 'get_guests':
         # attendees = redis_client.smembers(SAVED_IDS)
@@ -129,12 +135,13 @@ async def process_callback(callback_query: types.CallbackQuery):
             message_text = f"На данный момент сказали что придут:\n{users_names}\nВсего: {len(attendees)} гостей"
         else:
             message_text = "There are no guests yet. The party is still young!"
-        await bot.send_message(callback_query.from_user.id, message_text)
+        await bot.send_message(callback_query.from_user.id, message_text,
+                               reply_markup=get_keyboard(callback_query.from_user.id),
+        )
     elif callback_query.data == 'rules':
         message_text = get_rules()
-        await bot.answer_callback_query(callback_query.id)
         await bot.send_message(callback_query.from_user.id, message_text, reply_markup=get_keyboard(user_id), parse_mode='Markdown')
-        
+        await bot.answer_callback_query(callback_query.id)
     # Refresh the keyboard to update the 'Count me in/out' button text
     try:
         await bot.edit_message_reply_markup(callback_query.from_user.id, callback_query.message.message_id, reply_markup=get_keyboard(user_id))
