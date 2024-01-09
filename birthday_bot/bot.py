@@ -13,7 +13,7 @@ import sys, os
 real_path = os.path.realpath(__file__)
 dir_path = os.path.dirname(real_path)
 sys.path.append(os.path.join(dir_path, '..'))
-#  mprint(sys.path)
+#  print(sys.path)
 
 from birthday_bot.messages import get_rules, get_greeting_message, get_address_msg
 from birthday_bot import resources
