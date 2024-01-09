@@ -33,7 +33,7 @@ bot = Bot(token=bot_token)
 dp = Dispatcher(bot)
 
 # Connect to Redis
-redis_client = redis.Redis(host='localhost', port=16380, db=0)
+redis_client = redis.Redis(host=redis_host, port=redis_port, db=0)
 
 
 SAVED_IDS = "attendees_ids"
@@ -71,7 +71,7 @@ def get_keyboard(user_id):
     attend_button_text = 'НЕ ПРИДУ!' if is_attending else 'ПРИДУ!'
     keyboard = InlineKeyboardMarkup().row(
         InlineKeyboardButton(attend_button_text, callback_data='toggle_attend'),
-        InlineKeyboardButton('Адрес!', callback_data='get_address'),
+        InlineKeyboardButton('Где и когда!?', callback_data='get_address'),
         InlineKeyboardButton('Кто придет?', callback_data='get_guests'),
         InlineKeyboardButton('ПРАВИЛА!', callback_data='rules'),
     )
@@ -110,7 +110,7 @@ async def process_callback(callback_query: types.CallbackQuery):
     elif callback_query.data == 'get_address':
         address = get_address_msg()  # Replace with your actual address
         await bot.answer_callback_query(callback_query.id)
-        await bot.send_message(callback_query.from_user.id, address)
+        await bot.send_message(callback_query.from_user.id, address, parse_mode='Markdown')
         # Send video "resources/home.mp4" additionally
         with impresources.path(resources, 'home.mp4') as path:
             with open(path, 'rb') as video_file:
@@ -126,14 +126,14 @@ async def process_callback(callback_query: types.CallbackQuery):
         if len(attendees) > 0:
             # users_names = [  for user in list(attendees.values())]
             users_names = '\n'.join([f"@{str(attendee)}" for attendee in list(attendees.values())])
-            message_text = f"Current guest list:\n  {users_names}\nTotal: {len(attendees)} guests"
+            message_text = f"На данный момент сказали что придут:\n{users_names}\nВсего: {len(attendees)} гостей"
         else:
             message_text = "There are no guests yet. The party is still young!"
         await bot.send_message(callback_query.from_user.id, message_text)
     elif callback_query.data == 'rules':
         message_text = get_rules()
         await bot.answer_callback_query(callback_query.id)
-        await bot.send_message(callback_query.from_user.id, message_text, reply_markup=get_keyboard(user_id))
+        await bot.send_message(callback_query.from_user.id, message_text, reply_markup=get_keyboard(user_id), parse_mode='Markdown')
         
     # Refresh the keyboard to update the 'Count me in/out' button text
     try:
