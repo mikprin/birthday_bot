@@ -11,3 +11,10 @@ Start the bot by running python bot.py.
 Send the `/start` command to the bot in your Telegram chat.
 Use the inline keyboard buttons to interact with the bot and RSVP, get the address, view the guest list, or read the rules.
 That's it! You now have a Telegram bot for managing a birthday party. Enjoy!
+
+## Commands
+
+Command - Description
+start - Вся необходимая учаснику информация
+broadcast - Рассылка сообщения всем пользователям (только администратору)
+rules - Правила

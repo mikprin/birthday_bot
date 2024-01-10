@@ -2,7 +2,10 @@ from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 import redis, json
 from importlib import resources as impresources
-
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.dispatcher.filters import CommandStart
+from aiogram.dispatcher.handler import CancelHandler
+from aiogram.dispatcher.middlewares import BaseMiddleware
 
 from aiogram.utils.exceptions import MessageNotModified
 
@@ -17,6 +20,7 @@ sys.path.append(os.path.join(dir_path, '..'))
 
 from birthday_bot.messages import get_rules, get_greeting_message, get_address_msg
 from birthday_bot import resources
+from birthday_bot.outbox import send_message_to_user
 
 # If ENV is not set, use dotenv
 if not os.environ.get('ENV'):
@@ -24,13 +28,16 @@ if not os.environ.get('ENV'):
     load_dotenv()
 
 # Initialize bot with token from BotFather
-assert os.environ['ENV'] == 'prod', 'ENV is not set'
+env_type = os.environ.get('ENV')
+assert (env_type == 'prod' or env_type == 'test'), 'ENV is not set. Expected "prod" or "test". Exiting...'
+
 bot_token = os.environ['BOT_TOKEN']
 redis_host = os.environ['REDIS_HOST']
 redis_port = os.environ['REDIS_PORT']
 
 bot = Bot(token=bot_token)
 dp = Dispatcher(bot)
+dp.middleware.setup(LoggingMiddleware())
 
 # Connect to Redis
 redis_client = redis.Redis(host=redis_host, port=redis_port, db=0)
@@ -38,6 +45,16 @@ redis_client = redis.Redis(host=redis_host, port=redis_port, db=0)
 
 SAVED_IDS = "attendees_ids"
 SAVED_USERS = "attendees_users"
+ADMIN_USERS = os.getenv('ADMIN_USERS').split(',')
+
+
+
+class AdminFilter(BaseMiddleware):
+    async def on_pre_process_message(self, message: types.Message, data: dict):
+        if str(message.from_user.id) not in ADMIN_USERS:
+            await message.answer("You are not authorized to use this command.")
+            raise CancelHandler()
+
 
 
 # Def function to work with redis
@@ -85,6 +102,19 @@ async def send_welcome(message: types.Message):
     await message.reply(welcome_text,
                         reply_markup=get_keyboard(message.from_user.id),
                         parse_mode='Markdown')
+
+
+@dp.message_handler(commands=['broadcast'], commands_prefix='/')
+async def notify_users(message: types.Message):
+    broadcast_text = message.get_args()
+    if not broadcast_text:
+        await message.answer("Please provide a message to broadcast.")
+        return False
+    
+    attendees = get_dict_from_redis(SAVED_USERS, redis_client)
+    for user_id, username in attendees.items():
+        await send_message_to_user(user_id, broadcast_text, bot, disable_notification = False)
+
 
 @dp.message_handler(commands=['rules'])
 async def send_rules(message: types.Message):
